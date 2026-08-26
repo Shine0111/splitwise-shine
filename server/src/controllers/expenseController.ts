@@ -57,3 +57,36 @@ export const createExpense = async (req: AuthRequest, res: Response) => {
     res.status(500).json({ message: "Server error", error });
   }
 };
+
+export const getGroupExpenses = async (req: AuthRequest, res: Response) => {
+  try {
+    const { groupId } = req.params;
+
+    if (!req.user) {
+      return res.status(401).json({ message: "Not authorized" });
+    }
+
+    const group = await Group.findById(groupId);
+    if (!group) {
+      return res.status(404).json({ message: "Group not found" });
+    }
+
+    const isMember = group.members.some(
+      (memberId) => memberId.toString() === req.user!._id.toString(),
+    );
+    if (!isMember) {
+      return res
+        .status(403)
+        .json({ message: "You are not a member of this group" });
+    }
+
+    const expenses = await Expense.find({ group: groupId })
+      .populate("paidBy", "name email")
+      .populate("splits.user", "name email")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json(expenses);
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error });
+  }
+};
