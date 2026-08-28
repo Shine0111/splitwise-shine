@@ -33,7 +33,7 @@ export default function RegisterScreen({ navigation }: any) {
       const data = await registerRequest(name, email, password);
       await login(
         { id: data.id, name: data.name, email: data.email },
-        (data as any).token,
+        data.token,
       );
     } catch (error: any) {
       const message =

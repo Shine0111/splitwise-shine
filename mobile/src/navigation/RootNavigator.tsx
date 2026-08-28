@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import { View, ActivityIndicator } from "react-native";
 import LoginScreen from "../screens/LoginScreen";
 import GroupListScreen from "../screens/GroupListScreen";
+import RegisterScreen from "../screens/RegisterScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -24,7 +25,10 @@ export default function RootNavigator() {
         {user ? (
           <Stack.Screen name="GroupList" component={GroupListScreen} />
         ) : (
-          <Stack.Screen name="Login" component={LoginScreen} />
+          <>
+            <Stack.Screen name="Login" component={LoginScreen} />
+            <Stack.Screen name="Register" component={RegisterScreen} />
+          </>
         )}
       </Stack.Navigator>
     </NavigationContainer>
