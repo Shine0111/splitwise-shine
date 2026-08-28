@@ -3,6 +3,11 @@ import Expense from "../models/Expense";
 import Group from "../models/Group";
 import { AuthRequest } from "../middleware/authMiddleware";
 import { calculateEqualSplit } from "../utils/calculateSplits";
+import User from "../models/User";
+import {
+  calculateNetBalances,
+  simplifyDebts,
+} from "../utils/calculateBalances";
 
 export const createExpense = async (req: AuthRequest, res: Response) => {
   try {
@@ -86,6 +91,53 @@ export const getGroupExpenses = async (req: AuthRequest, res: Response) => {
       .sort({ createdAt: -1 });
 
     res.status(200).json(expenses);
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error });
+  }
+};
+
+export const getGroupBalances = async (req: AuthRequest, res: Response) => {
+  try {
+    const { groupId } = req.params;
+
+    if (!req.user) {
+      return res.status(401).json({ message: "Not authorized" });
+    }
+
+    const group = await Group.findById(groupId);
+    if (!group) {
+      return res.status(404).json({ message: "Group not found" });
+    }
+
+    const isMember = group.members.some(
+      (memberId) => memberId.toString() === req.user!._id.toString(),
+    );
+    if (!isMember) {
+      return res
+        .status(403)
+        .json({ message: "You are not a member of this group" });
+    }
+
+    const expenses = await Expense.find({ group: groupId });
+
+    const netBalances = calculateNetBalances(expenses);
+    const transactions = simplifyDebts(netBalances);
+
+    const userIds = transactions.flatMap((t) => [t.from, t.to]);
+    const uniqueUserIds = [...new Set(userIds)];
+
+    const users = await User.find({ _id: { $in: uniqueUserIds } }).select(
+      "name email",
+    );
+    const userMap = new Map(users.map((u) => [u._id.toString(), u]));
+
+    const resolvedTransactions = transactions.map((t) => ({
+      from: userMap.get(t.from),
+      to: userMap.get(t.to),
+      amount: t.amount,
+    }));
+
+    res.status(200).json({ transactions: resolvedTransactions });
   } catch (error) {
     res.status(500).json({ message: "Server error", error });
   }
