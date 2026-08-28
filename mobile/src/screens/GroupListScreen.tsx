@@ -13,7 +13,7 @@ import {
 import { createGroupRequest, getMyGroupsRequest, Group } from "../api/groups";
 import { useFocusEffect } from "@react-navigation/native";
 
-export default function GroupListScreen() {
+export default function GroupListScreen({ navigation }: any) {
   const [loading, setLoading] = useState(true);
   const [groups, setGroups] = useState<Group[]>([]);
   const [newGroupName, setNewGroupName] = useState("");

@@ -5,6 +5,7 @@ import { View, ActivityIndicator } from "react-native";
 import LoginScreen from "../screens/LoginScreen";
 import RegisterScreen from "../screens/RegisterScreen";
 import MainTabs from "./MainTabs";
+import GroupDetailScreen from "../screens/GroupDetailScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -23,7 +24,10 @@ export default function RootNavigator() {
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {user ? (
-          <Stack.Screen name="GroupList" component={MainTabs} />
+          <>
+            <Stack.Screen name="GroupList" component={MainTabs} />
+            <Stack.Screen name="GroupDetail" component={GroupDetailScreen} />
+          </>
         ) : (
           <>
             <Stack.Screen name="Login" component={LoginScreen} />
