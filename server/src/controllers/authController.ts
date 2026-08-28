@@ -30,10 +30,13 @@ export const registerUser = async (req: Request, res: Response) => {
       password: hashedPassword,
     });
 
+    const token = generateToken(user._id.toString());
+
     res.status(201).json({
       id: user._id,
       name: user.name,
       email: user.email,
+      token,
     });
   } catch (error) {
     res.status(500).json({ message: "Server error", error });
