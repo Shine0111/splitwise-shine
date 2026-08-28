@@ -10,7 +10,7 @@ import {
 import { useAuth } from "../context/AuthContext";
 import { loginRequest } from "../api/auth";
 
-export default function LoginScreen() {
+export default function LoginScreen({ navigation }: any) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -67,6 +67,9 @@ export default function LoginScreen() {
         <Text style={styles.buttonText}>
           {submitting ? "Logging in..." : "Log In"}
         </Text>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={() => navigation.navigate("Register")}>
+        <Text>Don't have an account? Sign up</Text>
       </TouchableOpacity>
     </View>
   );
