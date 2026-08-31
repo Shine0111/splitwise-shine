@@ -7,6 +7,8 @@ import {
   StyleSheet,
   ActivityIndicator,
   Alert,
+  Modal,
+  TextInput,
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import {
@@ -15,6 +17,7 @@ import {
   Expense,
   BalanceTransaction,
 } from "../api/expenses";
+import { addMemberRequest } from "../api/groups";
 
 export default function GroupDetailScreen({ route, navigation }: any) {
   const { groupId, groupName } = route.params;
@@ -25,6 +28,9 @@ export default function GroupDetailScreen({ route, navigation }: any) {
   const [activeTab, setActiveTab] = useState<"expenses" | "balances">(
     "expenses",
   );
+  const [addMemberModalVisible, setAddMemberModalVisible] = useState(false);
+  const [memberEmail, setMemberEmail] = useState("");
+  const [addingMember, setAddingMember] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -38,6 +44,28 @@ export default function GroupDetailScreen({ route, navigation }: any) {
       Alert.alert("Error", "Failed to load group data");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAddMember = async () => {
+    if (!memberEmail.trim()) {
+      Alert.alert("Missing email", "Please enter an email address");
+      return;
+    }
+
+    setAddingMember(true);
+    try {
+      await addMemberRequest(groupId, memberEmail.trim());
+      setMemberEmail("");
+      setAddMemberModalVisible(false);
+      Alert.alert("Success", "Member added to the group");
+    } catch (error: any) {
+      const message =
+        error.response?.data?.message ||
+        "Failed to add member. Please try again.";
+      Alert.alert("Error", message);
+    } finally {
+      setAddingMember(false);
     }
   };
 
@@ -62,6 +90,12 @@ export default function GroupDetailScreen({ route, navigation }: any) {
           <Text style={styles.backButton}>← Back</Text>
         </TouchableOpacity>
         <Text style={styles.title}>{groupName}</Text>
+        <TouchableOpacity
+          style={styles.inviteButton}
+          onPress={() => setAddMemberModalVisible(true)}
+        >
+          <Text style={styles.inviteButtonText}>Invite Member</Text>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.tabRow}>
@@ -147,6 +181,43 @@ export default function GroupDetailScreen({ route, navigation }: any) {
       >
         <Text style={styles.fabText}>+ Add Expense</Text>
       </TouchableOpacity>
+
+      <Modal visible={addMemberModalVisible} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Invite Member</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Email address"
+              autoCapitalize="none"
+              keyboardType="email-address"
+              value={memberEmail}
+              onChangeText={setMemberEmail}
+              autoFocus
+            />
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={() => {
+                  setAddMemberModalVisible(false);
+                  setMemberEmail("");
+                }}
+              >
+                <Text style={styles.cancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.createButton}
+                onPress={handleAddMember}
+                disabled={addingMember}
+              >
+                <Text style={styles.createText}>
+                  {addingMember ? "Adding..." : "Add"}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -198,4 +269,43 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   fabText: { color: "#fff", fontSize: 16, fontWeight: "600" },
+  inviteButton: {
+    alignSelf: "flex-start",
+    backgroundColor: "#eff6ff",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    marginBottom: 12,
+  },
+  inviteButtonText: { color: "#2563eb", fontSize: 13, fontWeight: "600" },
+  modalTitle: { fontSize: 18, fontWeight: "bold", marginBottom: 16 },
+  input: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    marginBottom: 16,
+  },
+  modalButtons: { flexDirection: "row", justifyContent: "flex-end", gap: 12 },
+  cancelText: { color: "#666", fontSize: 15 },
+  cancelButton: { paddingVertical: 10, paddingHorizontal: 16 },
+  createButton: {
+    backgroundColor: "#2563eb",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+  createText: { color: "#fff", fontWeight: "600" },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.4)",
+    justifyContent: "flex-end",
+  },
+  modalContent: {
+    backgroundColor: "#fff",
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    padding: 24,
+  },
 });
