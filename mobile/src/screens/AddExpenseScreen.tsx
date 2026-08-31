@@ -1,16 +1,58 @@
 import { createExpenseRequest } from "../api/expenses";
 import { useState } from "react";
 import {
-  View,
   Text,
   TextInput,
   TouchableOpacity,
   KeyboardAvoidingView,
   StyleSheet,
   Platform,
+  Alert,
 } from "react-native";
 
-export default function AddExpenseScreen({ navigation }: any) {
+export default function AddExpenseScreen({ route, navigation }: any) {
+  const { groupId, groupName } = route.params;
+
+  const [description, setDescription] = useState("");
+  const [amount, setAmount] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async () => {
+    if (!description.trim()) {
+      Alert.alert(
+        "Missing description",
+        "Please enter what this expense was for",
+      );
+      return;
+    }
+    const numericAmount = Number(amount);
+    if (!amount || isNaN(numericAmount) || numericAmount <= 0) {
+      Alert.alert("Invalid amount", "Please enter a valid amount");
+      return;
+    }
+
+    if (!Number.isInteger(numericAmount)) {
+      Alert.alert(
+        "Invalid amount",
+        "Amount must be a whole number (Ariary has no cents)",
+      );
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await createExpenseRequest(groupId, description.trim(), numericAmount);
+      navigation.goBack();
+    } catch (error: any) {
+      const message =
+        error.response?.data?.message ||
+        "Failed to add expense. Please try again.";
+      Alert.alert("Error", message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -21,6 +63,38 @@ export default function AddExpenseScreen({ navigation }: any) {
       </TouchableOpacity>
 
       <Text style={styles.title}>Add Expense</Text>
+      <Text style={styles.subtitle}>{groupName}</Text>
+
+      <Text style={styles.label}>Description</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="e.g. Groceries, Taxi, Dinner"
+        value={description}
+        onChangeText={setDescription}
+      />
+
+      <Text style={styles.label}>Amount (MGA)</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="0"
+        keyboardType="number-pad"
+        value={amount}
+        onChangeText={setAmount}
+      />
+
+      <Text style={styles.helperText}>
+        This will be split equally among all group members.
+      </Text>
+
+      <TouchableOpacity
+        style={styles.submitButton}
+        onPress={handleSubmit}
+        disabled={submitting}
+      >
+        <Text style={styles.submitButtonText}>
+          {submitting ? "Adding..." : "Add Expense"}
+        </Text>
+      </TouchableOpacity>
     </KeyboardAvoidingView>
   );
 }
