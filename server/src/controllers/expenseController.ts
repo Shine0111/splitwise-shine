@@ -8,6 +8,7 @@ import {
   calculateNetBalances,
   simplifyDebts,
 } from "../utils/calculateBalances";
+import Settlement from "../models/Settlement";
 
 export const createExpense = async (req: AuthRequest, res: Response) => {
   try {
@@ -119,8 +120,9 @@ export const getGroupBalances = async (req: AuthRequest, res: Response) => {
     }
 
     const expenses = await Expense.find({ group: groupId });
+    const settlements = await Settlement.find({ group: groupId });
 
-    const netBalances = calculateNetBalances(expenses);
+    const netBalances = calculateNetBalances(expenses, settlements);
     const transactions = simplifyDebts(netBalances);
 
     const userIds = transactions.flatMap((t) => [t.from, t.to]);

@@ -5,6 +5,7 @@ import connectDB from "./config/db";
 import authRoutes from "./routes/authRoutes";
 import groupRoutes from "./routes/groupRoutes";
 import expenseRoutes from "./routes/expenseRoutes";
+import settlementRoutes from "./routes/settlementRoutes";
 
 dotenv.config();
 
@@ -17,6 +18,7 @@ app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/groups", groupRoutes);
 app.use("/api/expenses", expenseRoutes);
+app.use("/api/settlements", settlementRoutes);
 
 // Health check route
 app.get("/", (req: Request, res: Response) => {

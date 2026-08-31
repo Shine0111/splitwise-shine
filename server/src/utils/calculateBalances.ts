@@ -17,8 +17,15 @@ interface Transaction {
   amount: number;
 }
 
+interface SettlementInput {
+  from: Types.ObjectId;
+  to: Types.ObjectId;
+  amount: number;
+}
+
 export const calculateNetBalances = (
   expenses: ExpenseInput[],
+  settlements: SettlementInput[],
 ): Map<string, number> => {
   const balances = new Map<string, number>();
 
@@ -33,6 +40,11 @@ export const calculateNetBalances = (
     for (const split of expense.splits) {
       adjust(split.user.toString(), -split.amount);
     }
+  }
+
+  for (const settlement of settlements) {
+    adjust(settlement.from.toString(), settlement.amount);
+    adjust(settlement.to.toString(), -settlement.amount);
   }
 
   return balances;
