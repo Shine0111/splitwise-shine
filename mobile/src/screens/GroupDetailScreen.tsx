@@ -20,6 +20,7 @@ import {
 } from "../api/expenses";
 import { addMemberRequest } from "../api/groups";
 import { useAuth } from "../context/AuthContext";
+import { createSettlementRequest } from "../api/settlements";
 
 export default function GroupDetailScreen({ route, navigation }: any) {
   const { groupId, groupName } = route.params;
@@ -36,6 +37,9 @@ export default function GroupDetailScreen({ route, navigation }: any) {
   const { user } = useAuth();
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [settlingTransaction, setSettlingTransaction] =
+    useState<BalanceTransaction | null>(null);
+  const [settling, setSettling] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -102,6 +106,27 @@ export default function GroupDetailScreen({ route, navigation }: any) {
         },
       ],
     );
+  };
+
+  const handleSettle = async () => {
+    if (!settlingTransaction) return;
+
+    setSettling(true);
+    try {
+      await createSettlementRequest(
+        groupId,
+        settlingTransaction.to._id,
+        settlingTransaction.amount,
+      );
+      setSettlingTransaction(null);
+      fetchData();
+    } catch (error: any) {
+      const message =
+        error.response?.data?.message || "Failed to record settlement";
+      Alert.alert("Error", message);
+    } finally {
+      setSettling(false);
+    }
   };
 
   useFocusEffect(
@@ -206,6 +231,15 @@ export default function GroupDetailScreen({ route, navigation }: any) {
                 <Text style={styles.balanceName}>{item.to.name}</Text>
               </Text>
               <Text style={styles.balanceAmount}>{item.amount} Ar</Text>
+
+              {user?.id === item.from._id && (
+                <TouchableOpacity
+                  style={styles.settleButton}
+                  onPress={() => setSettlingTransaction(item)}
+                >
+                  <Text style={styles.settleButtonText}>Settle Up</Text>
+                </TouchableOpacity>
+              )}
             </View>
           )}
         />
@@ -298,6 +332,42 @@ export default function GroupDetailScreen({ route, navigation }: any) {
                       </Text>
                     </TouchableOpacity>
                   )}
+                </View>
+              </>
+            )}
+          </View>
+        </View>
+      </Modal>
+      <Modal visible={!!settlingTransaction} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            {settlingTransaction && (
+              <>
+                <Text style={styles.modalTitle}>Confirm Settlement</Text>
+                <Text style={styles.settleConfirmText}>
+                  Record that you paid{" "}
+                  <Text style={styles.balanceName}>
+                    {settlingTransaction.to.name}
+                  </Text>{" "}
+                  {settlingTransaction.amount} Ar?
+                </Text>
+
+                <View style={styles.modalButtons}>
+                  <TouchableOpacity
+                    style={styles.cancelButton}
+                    onPress={() => setSettlingTransaction(null)}
+                  >
+                    <Text style={styles.cancelText}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.createButton}
+                    onPress={handleSettle}
+                    disabled={settling}
+                  >
+                    <Text style={styles.createText}>
+                      {settling ? "Recording..." : "Confirm"}
+                    </Text>
+                  </TouchableOpacity>
                 </View>
               </>
             )}
@@ -419,4 +489,13 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   deleteButtonText: { color: "#dc2626", fontWeight: "600" },
+  settleButton: {
+    backgroundColor: "#dcfce7",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    marginLeft: 8,
+  },
+  settleButtonText: { color: "#16a34a", fontSize: 13, fontWeight: "600" },
+  settleConfirmText: { fontSize: 15, marginBottom: 20, lineHeight: 22 },
 });
