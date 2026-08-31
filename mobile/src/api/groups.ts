@@ -17,3 +17,13 @@ export const createGroupRequest = async (name: string): Promise<Group> => {
   const response = await apiClient.post<Group>("/groups", { name });
   return response.data;
 };
+
+export const addMemberRequest = async (
+  groupId: string,
+  email: string,
+): Promise<Group> => {
+  const response = await apiClient.post<Group>(`/groups/${groupId}/members`, {
+    email,
+  });
+  return response.data;
+};
