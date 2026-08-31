@@ -144,3 +144,31 @@ export const getGroupBalances = async (req: AuthRequest, res: Response) => {
     res.status(500).json({ message: "Server error", error });
   }
 };
+
+export const deleteExpense = async (req: AuthRequest, res: Response) => {
+  try {
+    const { expenseId } = req.params;
+
+    if (!req.user) {
+      return res.status(401).json({ message: "Not authorized" });
+    }
+
+    const expense = await Expense.findById(expenseId);
+    if (!expense) {
+      return res.status(404).json({ message: "Expense not found" });
+    }
+
+    const isPayer = expense.paidBy.toString() === req.user._id.toString();
+    if (!isPayer) {
+      return res
+        .status(403)
+        .json({ message: "Only the person who paid can delete this expense" });
+    }
+
+    await Expense.findByIdAndDelete(expenseId);
+
+    res.status(200).json({ message: "Expense deleted", id: expenseId });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error });
+  }
+};
