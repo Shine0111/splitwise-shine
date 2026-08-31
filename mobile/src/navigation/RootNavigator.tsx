@@ -6,6 +6,7 @@ import LoginScreen from "../screens/LoginScreen";
 import RegisterScreen from "../screens/RegisterScreen";
 import MainTabs from "./MainTabs";
 import GroupDetailScreen from "../screens/GroupDetailScreen";
+import AddExpenseScreen from "../screens/AddExpenseScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -27,6 +28,7 @@ export default function RootNavigator() {
           <>
             <Stack.Screen name="GroupList" component={MainTabs} />
             <Stack.Screen name="GroupDetail" component={GroupDetailScreen} />
+            <Stack.Screen name="AddExpense" component={AddExpenseScreen} />
           </>
         ) : (
           <>
