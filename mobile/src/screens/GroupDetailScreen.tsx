@@ -16,8 +16,10 @@ import {
   getGroupBalancesRequest,
   Expense,
   BalanceTransaction,
+  deleteExpenseRequest,
 } from "../api/expenses";
 import { addMemberRequest } from "../api/groups";
+import { useAuth } from "../context/AuthContext";
 
 export default function GroupDetailScreen({ route, navigation }: any) {
   const { groupId, groupName } = route.params;
@@ -31,6 +33,9 @@ export default function GroupDetailScreen({ route, navigation }: any) {
   const [addMemberModalVisible, setAddMemberModalVisible] = useState(false);
   const [memberEmail, setMemberEmail] = useState("");
   const [addingMember, setAddingMember] = useState(false);
+  const { user } = useAuth();
+  const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -67,6 +72,36 @@ export default function GroupDetailScreen({ route, navigation }: any) {
     } finally {
       setAddingMember(false);
     }
+  };
+
+  const handleDeleteExpense = async () => {
+    if (!selectedExpense) return;
+
+    Alert.alert(
+      "Delete expense",
+      `Delete "${selectedExpense.description}"? This cannot be undone.`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            setDeleting(true);
+            try {
+              await deleteExpenseRequest(selectedExpense._id);
+              setSelectedExpense(null);
+              fetchData();
+            } catch (error: any) {
+              const message =
+                error.response?.data?.message || "Failed to delete expense";
+              Alert.alert("Error", message);
+            } finally {
+              setDeleting(false);
+            }
+          },
+        },
+      ],
+    );
   };
 
   useFocusEffect(
@@ -140,7 +175,10 @@ export default function GroupDetailScreen({ route, navigation }: any) {
             <Text style={styles.emptyText}>No expenses yet.</Text>
           }
           renderItem={({ item }) => (
-            <View style={styles.expenseCard}>
+            <TouchableOpacity
+              style={styles.expenseCard}
+              onPress={() => setSelectedExpense(item)}
+            >
               <View style={styles.expenseRow}>
                 <Text style={styles.expenseDescription}>
                   {item.description}
@@ -150,7 +188,7 @@ export default function GroupDetailScreen({ route, navigation }: any) {
               <Text style={styles.expensePaidBy}>
                 Paid by {item.paidBy.name}
               </Text>
-            </View>
+            </TouchableOpacity>
           )}
         />
       ) : (
@@ -215,6 +253,54 @@ export default function GroupDetailScreen({ route, navigation }: any) {
                 </Text>
               </TouchableOpacity>
             </View>
+          </View>
+        </View>
+      </Modal>
+      <Modal visible={!!selectedExpense} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            {selectedExpense && (
+              <>
+                <Text style={styles.modalTitle}>
+                  {selectedExpense.description}
+                </Text>
+                <Text style={styles.detailAmount}>
+                  {selectedExpense.amount} Ar
+                </Text>
+                <Text style={styles.detailPaidBy}>
+                  Paid by {selectedExpense.paidBy.name}
+                </Text>
+
+                <Text style={styles.splitHeader}>Split</Text>
+                {selectedExpense.splits.map((split) => (
+                  <View key={split.user._id} style={styles.splitRow}>
+                    <Text style={styles.splitName}>{split.user.name}</Text>
+                    <Text style={styles.splitAmount}>{split.amount} Ar</Text>
+                  </View>
+                ))}
+
+                <View style={styles.modalButtons}>
+                  <TouchableOpacity
+                    style={styles.cancelButton}
+                    onPress={() => setSelectedExpense(null)}
+                  >
+                    <Text style={styles.cancelText}>Close</Text>
+                  </TouchableOpacity>
+
+                  {user?.id === selectedExpense.paidBy._id && (
+                    <TouchableOpacity
+                      style={styles.deleteButton}
+                      onPress={handleDeleteExpense}
+                      disabled={deleting}
+                    >
+                      <Text style={styles.deleteButtonText}>
+                        {deleting ? "Deleting..." : "Delete"}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </>
+            )}
           </View>
         </View>
       </Modal>
@@ -308,4 +394,29 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 16,
     padding: 24,
   },
+  detailAmount: { fontSize: 28, fontWeight: "bold", marginBottom: 4 },
+  detailPaidBy: { fontSize: 14, color: "#666", marginBottom: 20 },
+  splitHeader: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#888",
+    marginBottom: 8,
+    textTransform: "uppercase",
+  },
+  splitRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f0f0f0",
+  },
+  splitName: { fontSize: 15 },
+  splitAmount: { fontSize: 15, fontWeight: "600" },
+  deleteButton: {
+    backgroundColor: "#fee2e2",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+  deleteButtonText: { color: "#dc2626", fontWeight: "600" },
 });

@@ -49,3 +49,9 @@ export const createExpenseRequest = async (
   });
   return response.data;
 };
+
+export const deleteExpenseRequest = async (
+  expenseId: string,
+): Promise<void> => {
+  await apiClient.delete(`/expenses/${expenseId}`);
+};
