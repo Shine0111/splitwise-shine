@@ -120,7 +120,10 @@ export const getGroupBalances = async (req: AuthRequest, res: Response) => {
     }
 
     const expenses = await Expense.find({ group: groupId });
-    const settlements = await Settlement.find({ group: groupId });
+    const settlements = await Settlement.find({
+      group: groupId,
+      status: "confirmed",
+    });
 
     const netBalances = calculateNetBalances(expenses, settlements);
     const transactions = simplifyDebts(netBalances);
