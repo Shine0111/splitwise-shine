@@ -5,6 +5,7 @@ export interface ISettlement extends Document {
   from: Types.ObjectId;
   to: Types.ObjectId;
   amount: number;
+  status: "pending" | "confirmed" | "rejected";
   createdAt: Date;
   updatedAt: Date;
 }
@@ -34,6 +35,11 @@ const settlementSchema = new Schema<ISettlement>(
         validator: Number.isInteger,
         message: "Amount must be a whole number for MGA",
       },
+    },
+    status: {
+      type: String,
+      enum: ["pending", "confirmed", "rejected"],
+      default: "pending",
     },
   },
   { timestamps: true },
