@@ -6,6 +6,7 @@ export interface Settlement {
   from: { _id: string; name: string; email: string };
   to: { _id: string; name: string; email: string };
   amount: number;
+  status: "pending" | "confirmed" | "rejected";
   createdAt: string;
 }
 
@@ -19,5 +20,21 @@ export const createSettlementRequest = async (
     to,
     amount,
   });
+  return response.data;
+};
+
+export const getPendingSettlementsRequest = async (): Promise<Settlement[]> => {
+  const response = await apiClient.get<Settlement[]>("/settlements/pending");
+  return response.data;
+};
+
+export const confirmSettlementRequest = async (
+  settlementId: string,
+  action: "confirm" | "reject",
+): Promise<Settlement> => {
+  const response = await apiClient.patch<Settlement>(
+    `/settlements/${settlementId}/confirm`,
+    { action },
+  );
   return response.data;
 };
