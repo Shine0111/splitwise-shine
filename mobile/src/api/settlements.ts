@@ -38,3 +38,10 @@ export const confirmSettlementRequest = async (
   );
   return response.data;
 };
+
+export const getGroupSettlementsRequest = async (
+  groupId: string,
+): Promise<Settlement[]> => {
+  const response = await apiClient.get<Settlement[]>(`/settlements/${groupId}`);
+  return response.data;
+};

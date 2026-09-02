@@ -20,7 +20,11 @@ import {
 } from "../api/expenses";
 import { addMemberRequest } from "../api/groups";
 import { useAuth } from "../context/AuthContext";
-import { createSettlementRequest } from "../api/settlements";
+import {
+  createSettlementRequest,
+  getGroupSettlementsRequest,
+  Settlement,
+} from "../api/settlements";
 
 export default function GroupDetailScreen({ route, navigation }: any) {
   const { groupId, groupName } = route.params;
@@ -40,20 +44,32 @@ export default function GroupDetailScreen({ route, navigation }: any) {
   const [settlingTransaction, setSettlingTransaction] =
     useState<BalanceTransaction | null>(null);
   const [settling, setSettling] = useState(false);
+  const [settlements, setSettlements] = useState<Settlement[]>([]);
 
   const fetchData = async () => {
     try {
-      const [expensesData, balancesData] = await Promise.all([
+      const [expensesData, balancesData, settlementsData] = await Promise.all([
         getGroupExpensesRequest(groupId),
         getGroupBalancesRequest(groupId),
+        getGroupSettlementsRequest(groupId),
       ]);
       setExpenses(expensesData);
       setBalances(balancesData);
+      setSettlements(settlementsData);
     } catch (error) {
       Alert.alert("Error", "Failed to load group data");
     } finally {
       setLoading(false);
     }
+  };
+
+  const hasPendingSettlement = (transaction: BalanceTransaction) => {
+    return settlements.some(
+      (s) =>
+        s.status === "pending" &&
+        s.from._id === transaction.from._id &&
+        s.to._id === transaction.to._id,
+    );
   };
 
   const handleAddMember = async () => {
@@ -119,6 +135,10 @@ export default function GroupDetailScreen({ route, navigation }: any) {
         settlingTransaction.amount,
       );
       setSettlingTransaction(null);
+      Alert.alert(
+        "Request sent",
+        `${settlingTransaction.to.name} needs to confirm before this is reflected in the balance.`,
+      );
       fetchData();
     } catch (error: any) {
       const message =
@@ -224,24 +244,35 @@ export default function GroupDetailScreen({ route, navigation }: any) {
           ListEmptyComponent={
             <Text style={styles.emptyText}>Everyone is settled up.</Text>
           }
-          renderItem={({ item }) => (
-            <View style={styles.balanceCard}>
-              <Text style={styles.balanceText}>
-                <Text style={styles.balanceName}>{item.from.name}</Text> owes{" "}
-                <Text style={styles.balanceName}>{item.to.name}</Text>
-              </Text>
-              <Text style={styles.balanceAmount}>{item.amount} Ar</Text>
+          renderItem={({ item }) => {
+            const isPending = hasPendingSettlement(item);
 
-              {user?.id === item.from._id && (
-                <TouchableOpacity
-                  style={styles.settleButton}
-                  onPress={() => setSettlingTransaction(item)}
-                >
-                  <Text style={styles.settleButtonText}>Settle Up</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-          )}
+            return (
+              <View style={styles.balanceCard}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.balanceText}>
+                    <Text style={styles.balanceName}>{item.from.name}</Text>{" "}
+                    owes <Text style={styles.balanceName}>{item.to.name}</Text>
+                  </Text>
+                  <Text style={styles.balanceAmount}>{item.amount} Ar</Text>
+                </View>
+
+                {user?.id === item.from._id &&
+                  (isPending ? (
+                    <View style={styles.pendingBadge}>
+                      <Text style={styles.pendingBadgeText}>Pending</Text>
+                    </View>
+                  ) : (
+                    <TouchableOpacity
+                      style={styles.settleButton}
+                      onPress={() => setSettlingTransaction(item)}
+                    >
+                      <Text style={styles.settleButtonText}>Settle Up</Text>
+                    </TouchableOpacity>
+                  ))}
+              </View>
+            );
+          }}
         />
       )}
 
@@ -498,4 +529,12 @@ const styles = StyleSheet.create({
   },
   settleButtonText: { color: "#16a34a", fontSize: 13, fontWeight: "600" },
   settleConfirmText: { fontSize: 15, marginBottom: 20, lineHeight: 22 },
+  pendingBadge: {
+    backgroundColor: "#fef3c7",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    marginLeft: 8,
+  },
+  pendingBadgeText: { color: "#92400e", fontSize: 13, fontWeight: "600" },
 });

@@ -90,7 +90,7 @@ export const getGroupSettlements = async (req: AuthRequest, res: Response) => {
 
 export const confirmSettlement = async (req: AuthRequest, res: Response) => {
   try {
-    const settlementId = req.params.id;
+    const settlementId = req.params.settlementId;
     const action = req.body.action;
 
     if (!req.user) {
