@@ -1,33 +1,32 @@
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
-  StyleSheet,
   TouchableOpacity,
+  StyleSheet,
   Alert,
-  ActivityIndicator,
   FlatList,
+  ActivityIndicator,
 } from "react-native";
+import { useFocusEffect } from "@react-navigation/native";
 import { useAuth } from "../context/AuthContext";
-import { useCallback, useState } from "react";
 import {
-  confirmSettlementRequest,
   getPendingSettlementsRequest,
+  confirmSettlementRequest,
   Settlement,
 } from "../api/settlements";
-import { useFocusEffect } from "@react-navigation/native";
 
 export default function ProfileScreen() {
   const { user, logout } = useAuth();
-
-  const [loading, setLoading] = useState(true);
   const [pending, setPending] = useState<Settlement[]>([]);
+  const [loading, setLoading] = useState(true);
   const [respondingId, setRespondingId] = useState<string | null>(null);
 
   const fetchPending = async () => {
     try {
       const data = await getPendingSettlementsRequest();
       setPending(data);
-    } catch (error: any) {
+    } catch (error) {
       // silent fail is acceptable here — non-critical background data
     } finally {
       setLoading(false);
@@ -57,7 +56,7 @@ export default function ProfileScreen() {
     }
   };
 
-  const handleLogout = async () => {
+  const handleLogout = () => {
     Alert.alert("Log out", "Are you sure you want to log out?", [
       { text: "Cancel", style: "cancel" },
       { text: "Log out", style: "destructive", onPress: logout },
