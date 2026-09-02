@@ -2,7 +2,7 @@ import apiClient from "./client";
 
 export interface Settlement {
   _id: string;
-  group: string;
+  group: { _id: string; name: string };
   from: { _id: string; name: string; email: string };
   to: { _id: string; name: string; email: string };
   amount: number;
