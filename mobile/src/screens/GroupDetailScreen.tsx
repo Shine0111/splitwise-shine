@@ -64,12 +64,19 @@ export default function GroupDetailScreen({ route, navigation }: any) {
   };
 
   const hasPendingSettlement = (transaction: BalanceTransaction) => {
-    return settlements.some(
-      (s) =>
-        s.status === "pending" &&
-        s.from._id === transaction.from._id &&
-        s.to._id === transaction.to._id,
-    );
+    const relevantSettlements = settlements
+      .filter(
+        (s) =>
+          s.from._id === transaction.from._id &&
+          s.to._id === transaction.to._id,
+      )
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      );
+
+    const latest = relevantSettlements[0];
+    return latest?.status === "pending";
   };
 
   const handleAddMember = async () => {
