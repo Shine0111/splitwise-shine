@@ -133,3 +133,27 @@ export const confirmSettlement = async (req: AuthRequest, res: Response) => {
     res.status(500).json({ message: "Server error", error });
   }
 };
+
+export const getPendingSettlements = async (
+  req: AuthRequest,
+  res: Response,
+) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: "Not authorized" });
+    }
+
+    const settlements = await Settlement.find({
+      to: req.user._id,
+      status: "pending",
+    })
+      .populate("from", "name email")
+      .populate("to", "name email")
+      .populate("group", "name")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json(settlements);
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error });
+  }
+};
