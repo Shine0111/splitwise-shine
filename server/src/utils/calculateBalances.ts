@@ -25,7 +25,7 @@ interface SettlementInput {
 
 export const calculateNetBalances = (
   expenses: ExpenseInput[],
-  settlements: SettlementInput[],
+  settlements: SettlementInput[] = [],
 ): Map<string, number> => {
   const balances = new Map<string, number>();
 
