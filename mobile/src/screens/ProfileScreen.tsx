@@ -21,6 +21,8 @@ export default function ProfileScreen() {
   const [pending, setPending] = useState<Settlement[]>([]);
   const [loading, setLoading] = useState(true);
   const [respondingId, setRespondingId] = useState<string | null>(null);
+  const [isRejecting, setIsRejecting] = useState(false);
+  const [isConfirming, setIsConfirming] = useState(false);
 
   const fetchPending = async () => {
     try {
@@ -44,6 +46,8 @@ export default function ProfileScreen() {
     action: "confirm" | "reject",
   ) => {
     setRespondingId(settlementId);
+    if (action === "confirm") setIsConfirming(true);
+    if (action === "reject") setIsRejecting(true);
     try {
       await confirmSettlementRequest(settlementId, action);
       setPending((prev) => prev.filter((s) => s._id !== settlementId));
@@ -53,6 +57,8 @@ export default function ProfileScreen() {
       Alert.alert("Error", message);
     } finally {
       setRespondingId(null);
+      setIsConfirming(false);
+      setIsRejecting(false);
     }
   };
 
@@ -95,7 +101,9 @@ export default function ProfileScreen() {
                   onPress={() => handleRespond(item._id, "reject")}
                   disabled={respondingId === item._id}
                 >
-                  <Text style={styles.rejectText}>Reject</Text>
+                  <Text style={styles.rejectText}>
+                    {isRejecting ? "..." : "Reject"}
+                  </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.confirmButton}
@@ -103,7 +111,7 @@ export default function ProfileScreen() {
                   disabled={respondingId === item._id}
                 >
                   <Text style={styles.confirmText}>
-                    {respondingId === item._id ? "..." : "Confirm"}
+                    {isConfirming ? "..." : "Confirm"}
                   </Text>
                 </TouchableOpacity>
               </View>
