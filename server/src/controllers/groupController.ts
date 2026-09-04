@@ -45,42 +45,44 @@ export const getMyGroups = asyncHandler(
   },
 );
 
-export const addMember = async (req: AuthRequest, res: Response) => {
-  const { groupId } = req.params;
-  const { email } = req.body;
+export const addMember = asyncHandler(
+  async (req: AuthRequest, res: Response) => {
+    const { groupId } = req.params;
+    const { email } = req.body;
 
-  if (!email) {
-    throw new BadRequestError("Email is required");
-  }
+    if (!email) {
+      throw new BadRequestError("Email is required");
+    }
 
-  const group = await Group.findById(groupId);
-  if (!group) {
-    throw new NotFoundError("Group not found");
-  }
+    const group = await Group.findById(groupId);
+    if (!group) {
+      throw new NotFoundError("Group not found");
+    }
 
-  // Find user to add by email
-  const userToAdd = await User.findOne({ email });
-  if (!userToAdd) {
-    throw new NotFoundError("User not found");
-  }
+    // Find user to add by email
+    const userToAdd = await User.findOne({ email });
+    if (!userToAdd) {
+      throw new NotFoundError("User not found");
+    }
 
-  // Check if the user is already a member
-  const alreadyMember = group.members.some(
-    (memberId) => memberId.toString() === userToAdd._id.toString(),
-  );
+    // Check if the user is already a member
+    const alreadyMember = group.members.some(
+      (memberId) => memberId.toString() === userToAdd._id.toString(),
+    );
 
-  if (alreadyMember) {
-    throw new BadRequestError("User is already a member");
-  }
+    if (alreadyMember) {
+      throw new BadRequestError("User is already a member");
+    }
 
-  // Add user to group
-  group.members.push(userToAdd._id);
-  await group.save();
+    // Add user to group
+    group.members.push(userToAdd._id);
+    await group.save();
 
-  const updatedGroup = await Group.findById(groupId).populate(
-    "members",
-    "name email",
-  );
+    const updatedGroup = await Group.findById(groupId).populate(
+      "members",
+      "name email",
+    );
 
-  res.status(200).json(updatedGroup);
-};
+    res.status(200).json(updatedGroup);
+  },
+);
