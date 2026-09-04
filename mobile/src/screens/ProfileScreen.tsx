@@ -16,6 +16,7 @@ import {
   Settlement,
 } from "../api/settlements";
 import { getErrorMessage } from "../utils/errorMessage";
+import { colors, spacing } from "../utils/theme";
 
 export default function ProfileScreen() {
   const { user, logout } = useAuth();
@@ -68,56 +69,73 @@ export default function ProfileScreen() {
     ]);
   };
 
+  const initials =
+    user?.name
+      ?.trim()
+      .split(/\s+/)
+      .map((part) => part[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase() || "?";
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.name}>{user?.name}</Text>
-        <Text style={styles.email}>{user?.email}</Text>
+        <View style={styles.avatar}>
+          <Text style={styles.avatarText}>{initials}</Text>
+        </View>
+
+        <View style={styles.profileInfo}>
+          <Text style={styles.name}>{user?.name}</Text>
+          <Text style={styles.email}>{user?.email}</Text>
+        </View>
       </View>
 
-      <Text style={styles.sectionTitle}>Pending Confirmations</Text>
+      <View style={styles.confirmationsSection}>
+        <Text style={styles.sectionTitle}>Pending Confirmations</Text>
 
-      {loading ? (
-        <ActivityIndicator style={{ marginVertical: 16 }} />
-      ) : pending.length === 0 ? (
-        <Text style={styles.emptyText}>Nothing pending.</Text>
-      ) : (
-        <FlatList
-          data={pending}
-          keyExtractor={(item) => item._id}
-          scrollEnabled={false}
-          renderItem={({ item }) => (
-            <View style={styles.pendingCard}>
-              <Text style={styles.pendingText}>
-                <Text style={styles.bold}>{item.from.name}</Text> says they paid
-                you <Text style={styles.bold}>{item.amount} Ar</Text>
-              </Text>
-              <Text style={styles.pendingGroup}>{item.group.name}</Text>
+        {loading ? (
+          <ActivityIndicator style={{ marginVertical: 16 }} />
+        ) : pending.length === 0 ? (
+          <Text style={styles.emptyText}>Nothing pending.</Text>
+        ) : (
+          <FlatList
+            data={pending}
+            keyExtractor={(item) => item._id}
+            scrollEnabled={false}
+            renderItem={({ item }) => (
+              <View style={styles.pendingCard}>
+                <Text style={styles.pendingText}>
+                  <Text style={styles.bold}>{item.from.name}</Text> says they
+                  paid you <Text style={styles.bold}>{item.amount} Ar</Text>
+                </Text>
+                <Text style={styles.pendingGroup}>{item.group.name}</Text>
 
-              <View style={styles.pendingButtons}>
-                <TouchableOpacity
-                  style={styles.rejectButton}
-                  onPress={() => handleRespond(item._id, "reject")}
-                  disabled={respondingId === item._id}
-                >
-                  <Text style={styles.rejectText}>
-                    {isRejecting ? "..." : "Reject"}
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.confirmButton}
-                  onPress={() => handleRespond(item._id, "confirm")}
-                  disabled={respondingId === item._id}
-                >
-                  <Text style={styles.confirmText}>
-                    {isConfirming ? "..." : "Confirm"}
-                  </Text>
-                </TouchableOpacity>
+                <View style={styles.pendingButtons}>
+                  <TouchableOpacity
+                    style={styles.rejectButton}
+                    onPress={() => handleRespond(item._id, "reject")}
+                    disabled={respondingId === item._id}
+                  >
+                    <Text style={styles.rejectText}>
+                      {isRejecting ? "..." : "Reject"}
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.confirmButton}
+                    onPress={() => handleRespond(item._id, "confirm")}
+                    disabled={respondingId === item._id}
+                  >
+                    <Text style={styles.confirmText}>
+                      {isConfirming ? "..." : "Confirm"}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
               </View>
-            </View>
-          )}
-        />
-      )}
+            )}
+          />
+        )}
+      </View>
 
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
         <Text style={styles.logoutText}>Log Out</Text>
@@ -127,50 +145,124 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 24 },
-  header: { marginBottom: 24, marginTop: 16 },
-  name: { fontSize: 22, fontWeight: "bold" },
-  email: { fontSize: 14, color: "#666", marginTop: 4 },
+  container: {
+    flex: 1,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.lg,
+    backgroundColor: colors.background,
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: spacing.xl,
+  },
+  avatar: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: colors.primary,
+    marginRight: spacing.md,
+  },
+  avatarText: {
+    color: colors.surface,
+    fontSize: 20,
+    fontWeight: "800",
+  },
+  profileInfo: {
+    flex: 1,
+  },
+  name: {
+    color: colors.text,
+    fontSize: 22,
+    fontWeight: "800",
+  },
+  email: {
+    color: colors.muted,
+    fontSize: 14,
+    marginTop: spacing.xs,
+  },
   sectionTitle: {
-    fontSize: 15,
+    color: colors.text,
+    fontSize: 18,
     fontWeight: "700",
-    color: "#888",
-    marginBottom: 10,
-    textTransform: "uppercase",
+    marginBottom: spacing.md,
   },
   emptyText: { color: "#888", fontSize: 14, marginBottom: 24 },
   pendingCard: {
-    backgroundColor: "#f3f4f6",
-    borderRadius: 10,
-    padding: 14,
-    marginBottom: 10,
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderWidth: 1,
+    borderRadius: 16,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+    shadowColor: "#000",
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 2,
   },
-  pendingText: { fontSize: 14, marginBottom: 2 },
-  pendingGroup: { fontSize: 12, color: "#888", marginBottom: 12 },
-  bold: { fontWeight: "700" },
-  pendingButtons: { flexDirection: "row", gap: 8 },
+  pendingText: {
+    color: colors.text,
+    fontSize: 15,
+    lineHeight: 22,
+    marginBottom: spacing.xs,
+  },
+  pendingGroup: {
+    color: colors.muted,
+    fontSize: 13,
+    marginBottom: spacing.md,
+  },
+  bold: {
+    color: colors.text,
+    fontWeight: "700",
+  },
+  pendingButtons: {
+    flexDirection: "row",
+    gap: spacing.sm,
+  },
   rejectButton: {
     flex: 1,
-    backgroundColor: "#fee2e2",
-    paddingVertical: 8,
-    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.danger,
+    backgroundColor: colors.surface,
+    paddingVertical: spacing.sm,
+    borderRadius: 10,
     alignItems: "center",
   },
-  rejectText: { color: "#dc2626", fontWeight: "600", fontSize: 13 },
+  rejectText: {
+    color: colors.danger,
+    fontWeight: "700",
+    fontSize: 13,
+  },
   confirmButton: {
     flex: 1,
-    backgroundColor: "#dcfce7",
-    paddingVertical: 8,
-    borderRadius: 8,
+    backgroundColor: colors.success,
+    paddingVertical: spacing.sm,
+    borderRadius: 10,
     alignItems: "center",
   },
-  confirmText: { color: "#16a34a", fontWeight: "600", fontSize: 13 },
+  confirmText: {
+    color: colors.surface,
+    fontWeight: "700",
+    fontSize: 13,
+  },
   logoutButton: {
-    backgroundColor: "#fee2e2",
-    borderRadius: 8,
-    padding: 14,
+    borderWidth: 1,
+    borderColor: colors.danger,
+    backgroundColor: "transparent",
+    borderRadius: 10,
+    paddingVertical: spacing.md,
     alignItems: "center",
-    marginTop: 32,
+    marginTop: spacing.lg,
   },
-  logoutText: { color: "#dc2626", fontSize: 16, fontWeight: "600" },
+  logoutText: {
+    color: colors.danger,
+    fontSize: 15,
+    fontWeight: "700",
+  },
+  confirmationsSection: {
+    flex: 1,
+  },
 });
