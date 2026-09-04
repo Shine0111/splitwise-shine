@@ -39,6 +39,13 @@ export const createSettlement = asyncHandler(
       throw new ForbiddenError("You are not a member of this group");
     }
 
+    const isRecipientMember = group.members.some(
+      (memberId) => memberId.toString() === to,
+    );
+    if (!isRecipientMember) {
+      throw new BadRequestError("Recipient is not a member of this group");
+    }
+
     const settlement = await Settlement.create({
       group: groupId,
       from: req.user._id,
