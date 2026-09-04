@@ -3,20 +3,22 @@ import bcrypt from "bcryptjs";
 import User from "../models/User";
 import generateToken from "../utils/generateToken";
 import { AuthRequest } from "../middleware/authMiddleware";
+import { asyncHandler } from "../utils/asyncHandler";
+import { BadRequestError, ConflictError } from "../utils/errors";
 
-export const registerUser = async (req: Request, res: Response) => {
-  try {
+export const registerUser = asyncHandler(
+  async (req: Request, res: Response) => {
     const { name, email, password } = req.body;
 
     // Check if info is not completed
     if (!name || !email || !password) {
-      return res.status(400).json({ message: "All fields are required" });
+      throw new BadRequestError("All fields are required");
     }
 
     // Check if user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.status(400).json({ message: "Email already in use" });
+      throw new ConflictError("Email already in use");
     }
 
     // Hash password
@@ -38,10 +40,8 @@ export const registerUser = async (req: Request, res: Response) => {
       email: user.email,
       token,
     });
-  } catch (error) {
-    res.status(500).json({ message: "Server error", error });
-  }
-};
+  },
+);
 
 export const loginUser = async (req: Request, res: Response) => {
   try {
