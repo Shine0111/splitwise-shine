@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { createGroupRequest, getMyGroupsRequest, Group } from "../api/groups";
 import { useFocusEffect } from "@react-navigation/native";
+import { colors, spacing } from "../utils/theme";
 
 export default function GroupListScreen({ navigation }: any) {
   const [loading, setLoading] = useState(true);
@@ -66,7 +67,13 @@ export default function GroupListScreen({ navigation }: any) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Your Groups</Text>
+        <View>
+          <Text style={styles.title}>Your Groups</Text>
+          <Text style={styles.subtitle}>
+            Keep shared expenses organized in one place.
+          </Text>
+        </View>
+
         <TouchableOpacity
           style={styles.addButton}
           onPress={() => setModalVisible(true)}
@@ -80,9 +87,12 @@ export default function GroupListScreen({ navigation }: any) {
         keyExtractor={(item) => item._id}
         contentContainerStyle={groups.length === 0 && styles.centered}
         ListEmptyComponent={
-          <Text style={styles.emptyText}>
-            No groups yet. Create one to get started.
-          </Text>
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyTitle}>No groups yet</Text>
+            <Text style={styles.emptyText}>
+              Create a group to start splitting expenses with friends.
+            </Text>
+          </View>
         }
         renderItem={({ item }) => (
           <TouchableOpacity
@@ -141,32 +151,81 @@ export default function GroupListScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16 },
-  centered: { flex: 1, justifyContent: "center", alignItems: "center" },
+  container: {
+    flex: 1,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.lg,
+    backgroundColor: colors.background,
+  },
+  centered: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 16,
-    marginTop: 8,
+    alignItems: "flex-start",
+    marginBottom: spacing.lg,
   },
-  title: { fontSize: 24, fontWeight: "bold" },
+  title: {
+    color: colors.text,
+    fontSize: 28,
+    fontWeight: "700",
+  },
+  subtitle: {
+    color: colors.muted,
+    fontSize: 14,
+    lineHeight: 20,
+    marginTop: spacing.xs,
+    maxWidth: 240,
+  },
   addButton: {
-    backgroundColor: "#2563eb",
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 8,
-  },
-  addButtonText: { color: "#fff", fontWeight: "600" },
-  emptyText: { color: "#888", fontSize: 15 },
-  groupCard: {
-    backgroundColor: "#f3f4f6",
+    backgroundColor: colors.primary,
     borderRadius: 10,
-    padding: 16,
-    marginBottom: 12,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    marginLeft: spacing.sm,
   },
-  groupName: { fontSize: 17, fontWeight: "600" },
-  groupMembers: { fontSize: 13, color: "#666", marginTop: 4 },
+  addButtonText: {
+    color: colors.surface,
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  groupCard: {
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderWidth: 1,
+    borderRadius: 16,
+    padding: spacing.lg,
+    marginBottom: spacing.md,
+  },
+  groupName: {
+    color: colors.text,
+    fontSize: 18,
+    fontWeight: "700",
+  },
+  groupMembers: {
+    color: colors.muted,
+    fontSize: 14,
+    marginTop: spacing.sm,
+  },
+  emptyState: {
+    alignItems: "center",
+    paddingHorizontal: spacing.lg,
+  },
+  emptyTitle: {
+    color: colors.text,
+    fontSize: 18,
+    fontWeight: "700",
+    marginBottom: spacing.sm,
+  },
+  emptyText: {
+    color: colors.muted,
+    fontSize: 15,
+    lineHeight: 22,
+    textAlign: "center",
+  },
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.4)",

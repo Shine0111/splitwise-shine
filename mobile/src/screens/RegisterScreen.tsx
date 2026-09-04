@@ -10,12 +10,16 @@ import {
 import { useAuth } from "../context/AuthContext";
 import { registerRequest } from "../api/auth";
 import { getErrorMessage } from "../utils/errorMessage";
+import { colors, spacing } from "../utils/theme";
 
 export default function RegisterScreen({ navigation }: any) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [focusedField, setFocusedField] = useState<
+    "name" | "email" | "password" | null
+  >(null);
   const { login } = useAuth();
 
   const handleRegister = async () => {
@@ -43,29 +47,41 @@ export default function RegisterScreen({ navigation }: any) {
     }
   };
   return (
-    <View>
-      <Text style={styles.title}>Create Account</Text>
+    <View style={styles.container}>
+      <Text style={styles.title}>Create your account</Text>
+      <Text style={styles.subtitle}>
+        Start sharing expenses with friends and groups.
+      </Text>
 
       <TextInput
-        style={styles.input}
+        style={[styles.input, focusedField === "name" && styles.inputFocused]}
         placeholder="Name"
         value={name}
         onChangeText={setName}
+        onFocus={() => setFocusedField("name")}
+        onBlur={() => setFocusedField(null)}
       />
       <TextInput
-        style={styles.input}
+        style={[styles.input, focusedField === "email" && styles.inputFocused]}
         placeholder="Email"
         autoCapitalize="none"
         keyboardType="email-address"
         value={email}
         onChangeText={setEmail}
+        onFocus={() => setFocusedField("email")}
+        onBlur={() => setFocusedField(null)}
       />
       <TextInput
-        style={styles.input}
+        style={[
+          styles.input,
+          focusedField === "password" && styles.inputFocused,
+        ]}
         placeholder="Password"
         secureTextEntry
         value={password}
         onChangeText={setPassword}
+        onFocus={() => setFocusedField("password")}
+        onBlur={() => setFocusedField(null)}
       />
 
       <TouchableOpacity
@@ -86,7 +102,12 @@ export default function RegisterScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: "center", padding: 24 },
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    paddingHorizontal: spacing.lg,
+    backgroundColor: colors.background,
+  },
   title: {
     fontSize: 28,
     fontWeight: "bold",
@@ -110,4 +131,14 @@ const styles = StyleSheet.create({
   },
   buttonText: { color: "#fff", fontSize: 16, fontWeight: "600" },
   linkText: { color: "#2563eb", textAlign: "center", fontSize: 14 },
+  subtitle: {
+    color: colors.muted,
+    fontSize: 16,
+    lineHeight: 24,
+    marginBottom: spacing.xl,
+  },
+  inputFocused: {
+    borderColor: colors.primary,
+    borderWidth: 2,
+  },
 });
