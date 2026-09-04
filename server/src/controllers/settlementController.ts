@@ -1,6 +1,5 @@
 import { Response } from "express";
 import Settlement from "../models/Settlement";
-import Expense from "../models/Expense";
 import Group from "../models/Group";
 import { AuthRequest } from "../middleware/authMiddleware";
 import { asyncHandler } from "../utils/asyncHandler";
