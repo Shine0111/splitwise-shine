@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
 import { loginRequest } from "../api/auth";
+import { getErrorMessage } from "../utils/errorMessage";
 
 export default function LoginScreen({ navigation }: any) {
   const [email, setEmail] = useState("");
@@ -30,10 +31,7 @@ export default function LoginScreen({ navigation }: any) {
         data.token,
       );
     } catch (error: any) {
-      const message =
-        error.response?.data?.message ||
-        "Something went wrong. Please try again.";
-      Alert.alert("Login failed", message);
+      Alert.alert("Login failed", getErrorMessage(error));
     } finally {
       setSubmitting(false);
     }

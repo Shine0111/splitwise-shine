@@ -15,6 +15,7 @@ import {
   confirmSettlementRequest,
   Settlement,
 } from "../api/settlements";
+import { getErrorMessage } from "../utils/errorMessage";
 
 export default function ProfileScreen() {
   const { user, logout } = useAuth();
@@ -52,9 +53,7 @@ export default function ProfileScreen() {
       await confirmSettlementRequest(settlementId, action);
       setPending((prev) => prev.filter((s) => s._id !== settlementId));
     } catch (error: any) {
-      const message =
-        error.response?.data?.message || "Failed to respond to settlement";
-      Alert.alert("Error", message);
+      Alert.alert("Error", getErrorMessage(error));
     } finally {
       setRespondingId(null);
       setIsConfirming(false);

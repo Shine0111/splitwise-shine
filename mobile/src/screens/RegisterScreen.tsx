@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
 import { registerRequest } from "../api/auth";
+import { getErrorMessage } from "../utils/errorMessage";
 
 export default function RegisterScreen({ navigation }: any) {
   const [name, setName] = useState("");
@@ -36,11 +37,7 @@ export default function RegisterScreen({ navigation }: any) {
         data.token,
       );
     } catch (error: any) {
-      const message =
-        error.response?.data?.message ||
-        "Something went wrong. Please try again.";
-
-      Alert.alert("Registration failed", message);
+      Alert.alert("Registration failed", getErrorMessage(error));
     } finally {
       setSubmitting(false);
     }

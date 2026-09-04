@@ -5,6 +5,7 @@ const API_URL = "https://splitwise-shine-api.onrender.com/api";
 
 const apiClient = axios.create({
   baseURL: API_URL,
+  timeout: 45000,
 });
 
 apiClient.interceptors.request.use(async (config) => {

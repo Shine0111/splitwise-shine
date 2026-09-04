@@ -25,6 +25,7 @@ import {
   getGroupSettlementsRequest,
   Settlement,
 } from "../api/settlements";
+import { getErrorMessage } from "../utils/errorMessage";
 
 export default function GroupDetailScreen({ route, navigation }: any) {
   const { groupId, groupName } = route.params;
@@ -92,10 +93,7 @@ export default function GroupDetailScreen({ route, navigation }: any) {
       setAddMemberModalVisible(false);
       Alert.alert("Success", "Member added to the group");
     } catch (error: any) {
-      const message =
-        error.response?.data?.message ||
-        "Failed to add member. Please try again.";
-      Alert.alert("Error", message);
+      Alert.alert("Error", getErrorMessage(error));
     } finally {
       setAddingMember(false);
     }
@@ -119,9 +117,7 @@ export default function GroupDetailScreen({ route, navigation }: any) {
               setSelectedExpense(null);
               fetchData();
             } catch (error: any) {
-              const message =
-                error.response?.data?.message || "Failed to delete expense";
-              Alert.alert("Error", message);
+              Alert.alert("Error", getErrorMessage(error));
             } finally {
               setDeleting(false);
             }
@@ -148,9 +144,7 @@ export default function GroupDetailScreen({ route, navigation }: any) {
       );
       fetchData();
     } catch (error: any) {
-      const message =
-        error.response?.data?.message || "Failed to record settlement";
-      Alert.alert("Error", message);
+      Alert.alert("Error", getErrorMessage(error));
     } finally {
       setSettling(false);
     }

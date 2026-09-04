@@ -9,6 +9,7 @@ import {
   Platform,
   Alert,
 } from "react-native";
+import { getErrorMessage } from "../utils/errorMessage";
 
 export default function AddExpenseScreen({ route, navigation }: any) {
   const { groupId, groupName } = route.params;
@@ -44,10 +45,7 @@ export default function AddExpenseScreen({ route, navigation }: any) {
       await createExpenseRequest(groupId, description.trim(), numericAmount);
       navigation.goBack();
     } catch (error: any) {
-      const message =
-        error.response?.data?.message ||
-        "Failed to add expense. Please try again.";
-      Alert.alert("Error", message);
+      Alert.alert("Error", getErrorMessage(error));
     } finally {
       setSubmitting(false);
     }
