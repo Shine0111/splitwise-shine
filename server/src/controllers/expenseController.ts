@@ -9,24 +9,31 @@ import {
   simplifyDebts,
 } from "../utils/calculateBalances";
 import Settlement from "../models/Settlement";
+import { asyncHandler } from "../utils/asyncHandler";
+import {
+  BadRequestError,
+  UnauthorizedError,
+  NotFoundError,
+  ForbiddenError,
+} from "../utils/errors";
 
-export const createExpense = async (req: AuthRequest, res: Response) => {
-  try {
+export const createExpense = asyncHandler(
+  async (req: AuthRequest, res: Response) => {
     const { groupId, description, amount, paidBy } = req.body;
 
     if (!groupId || !description || !amount) {
-      return res
-        .status(400)
-        .json({ message: "groupId, description, and amount are required" });
+      throw new BadRequestError(
+        "groupId, description, and amount are required",
+      );
     }
 
     if (!req.user) {
-      return res.status(401).json({ message: "Not authorized" });
+      throw new UnauthorizedError();
     }
 
     const group = await Group.findById(groupId);
     if (!group) {
-      return res.status(401).json({ message: "Group not found" });
+      throw new NotFoundError("Group not found");
     }
 
     const isMember = group.members.some(
@@ -34,9 +41,7 @@ export const createExpense = async (req: AuthRequest, res: Response) => {
     );
 
     if (!isMember) {
-      return res
-        .status(403)
-        .json({ message: "You are not a member of this group" });
+      throw new ForbiddenError("You are not a member of this group");
     }
 
     const payerId = paidBy || req.user._id;
@@ -56,25 +61,20 @@ export const createExpense = async (req: AuthRequest, res: Response) => {
       .populate("splits.user", "name email");
 
     res.status(201).json(populatedExpense);
-  } catch (error) {
-    if (error instanceof Error && error.message.includes("whole number")) {
-      return res.status(400).json({ message: error.message });
-    }
-    res.status(500).json({ message: "Server error", error });
-  }
-};
+  },
+);
 
-export const getGroupExpenses = async (req: AuthRequest, res: Response) => {
-  try {
+export const getGroupExpenses = asyncHandler(
+  async (req: AuthRequest, res: Response) => {
     const { groupId } = req.params;
 
     if (!req.user) {
-      return res.status(401).json({ message: "Not authorized" });
+      throw new UnauthorizedError("Not authorized");
     }
 
     const group = await Group.findById(groupId);
     if (!group) {
-      return res.status(404).json({ message: "Group not found" });
+      throw new NotFoundError("Group not found");
     }
 
     const isMember = group.members.some(
@@ -92,31 +92,27 @@ export const getGroupExpenses = async (req: AuthRequest, res: Response) => {
       .sort({ createdAt: -1 });
 
     res.status(200).json(expenses);
-  } catch (error) {
-    res.status(500).json({ message: "Server error", error });
-  }
-};
+  },
+);
 
-export const getGroupBalances = async (req: AuthRequest, res: Response) => {
-  try {
+export const getGroupBalances = asyncHandler(
+  async (req: AuthRequest, res: Response) => {
     const { groupId } = req.params;
 
     if (!req.user) {
-      return res.status(401).json({ message: "Not authorized" });
+      throw new UnauthorizedError("Not authorized");
     }
 
     const group = await Group.findById(groupId);
     if (!group) {
-      return res.status(404).json({ message: "Group not found" });
+      throw new NotFoundError("Group not found");
     }
 
     const isMember = group.members.some(
       (memberId) => memberId.toString() === req.user!._id.toString(),
     );
     if (!isMember) {
-      return res
-        .status(403)
-        .json({ message: "You are not a member of this group" });
+      throw new ForbiddenError("You are not a member of this group");
     }
 
     const expenses = await Expense.find({ group: groupId });
@@ -143,35 +139,31 @@ export const getGroupBalances = async (req: AuthRequest, res: Response) => {
     }));
 
     res.status(200).json({ transactions: resolvedTransactions });
-  } catch (error) {
-    res.status(500).json({ message: "Server error", error });
-  }
-};
+  },
+);
 
-export const deleteExpense = async (req: AuthRequest, res: Response) => {
-  try {
+export const deleteExpense = asyncHandler(
+  async (req: AuthRequest, res: Response) => {
     const { expenseId } = req.params;
 
     if (!req.user) {
-      return res.status(401).json({ message: "Not authorized" });
+      throw new UnauthorizedError("Not authorized");
     }
 
     const expense = await Expense.findById(expenseId);
     if (!expense) {
-      return res.status(404).json({ message: "Expense not found" });
+      throw new NotFoundError("Expense not found");
     }
 
     const isPayer = expense.paidBy.toString() === req.user._id.toString();
     if (!isPayer) {
-      return res
-        .status(403)
-        .json({ message: "Only the person who paid can delete this expense" });
+      throw new ForbiddenError(
+        "Only the person who paid can delete this expense",
+      );
     }
 
     await Expense.findByIdAndDelete(expenseId);
 
     res.status(200).json({ message: "Expense deleted", id: expenseId });
-  } catch (error) {
-    res.status(500).json({ message: "Server error", error });
-  }
-};
+  },
+);

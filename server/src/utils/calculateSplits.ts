@@ -1,4 +1,5 @@
 import { Types } from "mongoose";
+import { BadRequestError } from "./errors";
 
 interface Split {
   user: Types.ObjectId;
@@ -10,7 +11,7 @@ export const calculateEqualSplit = (
   memberIds: Types.ObjectId[],
 ): Split[] => {
   if (!Number.isInteger(totalAmount)) {
-    throw new Error("Amount must be a whole number for MGA");
+    throw new BadRequestError("Amount must be a whole number for MGA");
   }
 
   const numMembers = memberIds.length;
