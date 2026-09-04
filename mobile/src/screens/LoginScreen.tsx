@@ -10,11 +10,15 @@ import {
 import { useAuth } from "../context/AuthContext";
 import { loginRequest } from "../api/auth";
 import { getErrorMessage } from "../utils/errorMessage";
+import { colors, spacing } from "../utils/theme";
 
 export default function LoginScreen({ navigation }: any) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [focusedField, setFocusedField] = useState<"email" | "password" | null>(
+    null,
+  );
   const { login } = useAuth();
 
   const handleLogin = async () => {
@@ -39,22 +43,32 @@ export default function LoginScreen({ navigation }: any) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Splitwise Shine</Text>
+      <Text style={styles.title}>Welcome back</Text>
+      <Text style={styles.subtitle}>
+        Split expenses and stay in sync with your groups.
+      </Text>
 
       <TextInput
-        style={styles.input}
+        style={[styles.input, focusedField === "email" && styles.inputFocused]}
         placeholder="Email"
         autoCapitalize="none"
         keyboardType="email-address"
         value={email}
         onChangeText={setEmail}
+        onFocus={() => setFocusedField("email")}
+        onBlur={() => setFocusedField(null)}
       />
       <TextInput
-        style={styles.input}
+        style={[
+          styles.input,
+          focusedField === "password" && styles.inputFocused,
+        ]}
         placeholder="Password"
         secureTextEntry
         value={password}
         onChangeText={setPassword}
+        onFocus={() => setFocusedField("password")}
+        onBlur={() => setFocusedField(null)}
       />
 
       <TouchableOpacity
@@ -67,7 +81,7 @@ export default function LoginScreen({ navigation }: any) {
         </Text>
       </TouchableOpacity>
       <TouchableOpacity onPress={() => navigation.navigate("Register")}>
-        <Text>Don't have an account? Sign up</Text>
+        <Text style={styles.linkText}>Don't have an account? Sign up</Text>
       </TouchableOpacity>
     </View>
   );
@@ -77,25 +91,56 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: "center",
-    alignItems: "center",
+    paddingHorizontal: spacing.lg,
+    backgroundColor: colors.background,
   },
   title: {
-    fontSize: 24,
-    fontWeight: "bold",
+    color: colors.text,
+    fontSize: 32,
+    fontWeight: "700",
+    marginBottom: spacing.sm,
+  },
+  subtitle: {
+    color: colors.muted,
+    fontSize: 16,
+    lineHeight: 24,
+    marginBottom: spacing.xl,
   },
   input: {
+    width: "100%",
+    minHeight: 52,
     borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 16,
+    borderColor: colors.border,
+    borderRadius: 12,
+    backgroundColor: colors.surface,
+    color: colors.text,
+    paddingHorizontal: spacing.md,
     fontSize: 16,
+    marginBottom: spacing.md,
+  },
+  inputFocused: {
+    borderColor: colors.primary,
+    borderWidth: 2,
   },
   button: {
-    backgroundColor: "#2563eb",
-    borderRadius: 8,
-    padding: 14,
+    width: "100%",
+    minHeight: 52,
+    justifyContent: "center",
     alignItems: "center",
+    backgroundColor: colors.primary,
+    borderRadius: 12,
+    marginTop: spacing.sm,
+    marginBottom: spacing.lg,
   },
-  buttonText: { color: "#fff", fontSize: 16, fontWeight: "600" },
+  buttonText: {
+    color: colors.surface,
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  linkText: {
+    color: colors.primary,
+    textAlign: "center",
+    fontSize: 15,
+    fontWeight: "600",
+  },
 });
