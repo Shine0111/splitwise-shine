@@ -15,8 +15,19 @@ export const registerUser = asyncHandler(
     const { name, email, password } = req.body;
 
     // Check if info is not completed
-    if (!name || !email || !password) {
+    if (
+      typeof name !== "string" ||
+      typeof email !== "string" ||
+      typeof password !== "string" ||
+      !name.trim() ||
+      !email.trim() ||
+      !password
+    ) {
       throw new BadRequestError("All fields are required");
+    }
+
+    if (password.length < 6) {
+      throw new BadRequestError("Password must be at least 6 characters");
     }
 
     // Check if user already exists
@@ -51,7 +62,12 @@ export const loginUser = asyncHandler(async (req: Request, res: Response) => {
   const { email, password } = req.body;
 
   // Check if info is not complete
-  if (!email || !password) {
+  if (
+    typeof email !== "string" ||
+    typeof password !== "string" ||
+    !email.trim() ||
+    !password
+  ) {
     throw new BadRequestError("Email and password are required");
   }
 
