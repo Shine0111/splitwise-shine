@@ -263,5 +263,22 @@ describe("Authentication API", () => {
         message: "Not authorized, token failed",
       });
     });
+    it("returns a server error when JWT_SECRET is missing", async () => {
+      const originalSecret = process.env.JWT_SECRET;
+      delete process.env.JWT_SECRET;
+
+      try {
+        const response = await request(app)
+          .get("/api/auth/me")
+          .set("Authorization", "Bearer any-token");
+
+        expect(response.status).toBe(500);
+        expect(response.body).toEqual({
+          message: "Server error",
+        });
+      } finally {
+        process.env.JWT_SECRET = originalSecret;
+      }
+    });
   });
 });
