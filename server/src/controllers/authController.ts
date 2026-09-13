@@ -9,6 +9,7 @@ import {
   ConflictError,
   UnauthorizedError,
 } from "../utils/errors";
+import Session from "../models/Session";
 
 export const registerUser = asyncHandler(
   async (req: Request, res: Response) => {
@@ -47,13 +48,19 @@ export const registerUser = asyncHandler(
       password: hashedPassword,
     });
 
-    const token = generateToken(user._id.toString());
+    const generatedToken = generateToken(user._id.toString());
+
+    await Session.create({
+      user: user._id,
+      jti: generatedToken.jti,
+      expiresAt: generatedToken.expiresAt,
+    });
 
     res.status(201).json({
       id: user._id,
       name: user.name,
       email: user.email,
-      token,
+      token: generatedToken.token,
     });
   },
 );
@@ -84,13 +91,18 @@ export const loginUser = asyncHandler(async (req: Request, res: Response) => {
   }
 
   // Generate token
-  const token = generateToken(user._id.toString());
+  const generatedToken = generateToken(user._id.toString());
 
+  await Session.create({
+    user: user._id,
+    jti: generatedToken.jti,
+    expiresAt: generatedToken.expiresAt,
+  });
   res.status(200).json({
     id: user._id,
     name: user.name,
     email: user.email,
-    token,
+    token: generatedToken.token,
   });
 });
 
@@ -99,3 +111,26 @@ export const getMe = asyncHandler(async (req: AuthRequest, res: Response) => {
     user: req.user,
   });
 });
+
+export const logoutUser = asyncHandler(
+  async (req: AuthRequest, res: Response) => {
+    if (!req.user) {
+      throw new UnauthorizedError("Not authorized");
+    }
+
+    if (req.tokenJti) {
+      await Session.updateOne(
+        {
+          user: req.user._id,
+          jti: req.tokenJti,
+          revokedAt: { $exists: false },
+        },
+        {
+          $set: { revokedAt: new Date() },
+        },
+      );
+    }
+
+    res.status(200).json({ message: "Logged out" });
+  },
+);

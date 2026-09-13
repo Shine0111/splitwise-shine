@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
 import app from "../app";
 import User from "../models/User";
+import Session from "../models/Session";
 
 describe("Authentication API", () => {
   describe("POST /api/auth/register", () => {
@@ -91,6 +92,27 @@ describe("Authentication API", () => {
       expect(response.body).toEqual({
         message: "Email already in use",
       });
+    });
+    it("creates a session when registering a user", async () => {
+      const response = await request(app).post("/api/auth/register").send({
+        name: "Alice",
+        email: "alice@example.com",
+        password: "password123",
+      });
+
+      expect(response.status).toBe(201);
+
+      const decoded = jwt.decode(response.body.token) as {
+        id: string;
+        jti?: string;
+        exp?: number;
+      };
+
+      const session = await Session.findOne({ jti: decoded.jti });
+
+      expect(session).not.toBeNull();
+      expect(session?.user.toString()).toBe(decoded.id);
+      expect(session?.expiresAt.getTime()).toBe(decoded.exp! * 1000);
     });
   });
 
@@ -279,6 +301,119 @@ describe("Authentication API", () => {
       } finally {
         process.env.JWT_SECRET = originalSecret;
       }
+    });
+  });
+  describe("POST /api/auth/logout", () => {
+    const createUser = async () => {
+      await User.create({
+        name: "Alice",
+        email: "alice@example.com",
+        password: await bcrypt.hash("password123", 10),
+      });
+    };
+
+    const login = async () => {
+      const response = await request(app).post("/api/auth/login").send({
+        email: "alice@example.com",
+        password: "password123",
+      });
+
+      expect(response.status).toBe(200);
+      return response.body.token as string;
+    };
+
+    it("rejects logout without a bearer token", async () => {
+      const response = await request(app).post("/api/auth/logout");
+
+      expect(response.status).toBe(401);
+    });
+
+    it("issues a token and creates a matching session", async () => {
+      await createUser();
+
+      const token = await login();
+      const decoded = jwt.decode(token) as {
+        id: string;
+        jti?: string;
+        exp?: number;
+      };
+
+      expect(decoded.jti).toEqual(expect.any(String));
+      expect(decoded.exp).toEqual(expect.any(Number));
+
+      const session = await Session.findOne({ jti: decoded.jti });
+
+      expect(session).not.toBeNull();
+      expect(session?.user.toString()).toBe(decoded.id);
+      expect(session?.revokedAt).toBeUndefined();
+      expect(session?.expiresAt.getTime()).toBe(decoded.exp! * 1000);
+    });
+
+    it("revokes the current session", async () => {
+      await createUser();
+
+      const token = await login();
+
+      const logoutResponse = await request(app)
+        .post("/api/auth/logout")
+        .set("Authorization", `Bearer ${token}`);
+
+      expect(logoutResponse.status).toBe(200);
+
+      const meResponse = await request(app)
+        .get("/api/auth/me")
+        .set("Authorization", `Bearer ${token}`);
+
+      expect(meResponse.body).toEqual({
+        message: "Not authorized, session revoked",
+      });
+
+      expect(meResponse.status).toBe(401);
+    });
+
+    it("revokes only the current session", async () => {
+      await createUser();
+
+      const firstToken = await login();
+      const secondToken = await login();
+
+      const logoutResponse = await request(app)
+        .post("/api/auth/logout")
+        .set("Authorization", `Bearer ${firstToken}`);
+
+      expect(logoutResponse.status).toBe(200);
+
+      const firstMeResponse = await request(app)
+        .get("/api/auth/me")
+        .set("Authorization", `Bearer ${firstToken}`);
+
+      expect(firstMeResponse.status).toBe(401);
+
+      const secondMeResponse = await request(app)
+        .get("/api/auth/me")
+        .set("Authorization", `Bearer ${secondToken}`);
+
+      expect(secondMeResponse.status).toBe(200);
+    });
+    it("rejects repeated logout with an already revoked token", async () => {
+      await createUser();
+
+      const token = await login();
+
+      const firstLogoutResponse = await request(app)
+        .post("/api/auth/logout")
+        .set("Authorization", `Bearer ${token}`);
+
+      expect(firstLogoutResponse.status).toBe(200);
+
+      const secondLogoutResponse = await request(app)
+        .post("/api/auth/logout")
+        .set("Authorization", `Bearer ${token}`);
+
+      expect(secondLogoutResponse.status).toBe(401);
+      expect(secondLogoutResponse.body).toEqual({
+        message: "Not authorized, session revoked",
+      });
     });
   });
 });

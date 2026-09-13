@@ -2,13 +2,16 @@ import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import User, { IUser } from "../models/User";
 import { UnauthorizedError } from "../utils/errors";
+import Session from "../models/Session";
 
 export interface AuthRequest extends Request {
   user?: IUser;
+  tokenJti?: string;
 }
 
 interface JwtPayload {
   id: string;
+  jti?: string;
 }
 
 const protect = async (req: AuthRequest, res: Response, next: NextFunction) => {
@@ -42,6 +45,20 @@ const protect = async (req: AuthRequest, res: Response, next: NextFunction) => {
 
     if (!user) {
       throw new UnauthorizedError("Not authorized, user not found");
+    }
+
+    if (decoded.jti) {
+      const session = await Session.findOne({
+        user: user._id,
+        jti: decoded.jti,
+        revokedAt: { $exists: false },
+      });
+
+      if (!session) {
+        throw new UnauthorizedError("Not authorized, session revoked");
+      }
+
+      req.tokenJti = decoded.jti;
     }
 
     req.user = user;
