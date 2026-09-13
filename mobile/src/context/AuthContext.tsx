@@ -7,6 +7,7 @@ import {
 } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { User } from "../types";
+import { logoutRequest } from "../api/auth";
 
 interface AuthContextType {
   user: User | null;
@@ -51,10 +52,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const logout = async () => {
-    await AsyncStorage.removeItem("token");
-    await AsyncStorage.removeItem("user");
-    setToken(null);
-    setUser(null);
+    try {
+      await logoutRequest();
+    } finally {
+      await AsyncStorage.multiRemove(["token", "user"]);
+      setToken(null);
+      setUser(null);
+    }
   };
 
   return (
