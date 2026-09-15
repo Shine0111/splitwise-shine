@@ -7,6 +7,7 @@ import {
   BadRequestError,
   NotFoundError,
   UnauthorizedError,
+  ForbiddenError,
 } from "../utils/errors";
 
 export const createGroup = asyncHandler(
@@ -57,6 +58,13 @@ export const addMember = asyncHandler(
     const group = await Group.findById(groupId);
     if (!group) {
       throw new NotFoundError("Group not found");
+    }
+
+    // Only creator can add member
+    const isCreator = group.creator.toString() === req.user?._id.toString();
+
+    if (!isCreator) {
+      throw new ForbiddenError("Only the group creator can add members");
     }
 
     // Find user to add by email
