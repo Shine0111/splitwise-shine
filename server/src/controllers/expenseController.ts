@@ -19,7 +19,7 @@ import {
 
 export const createExpense = asyncHandler(
   async (req: AuthRequest, res: Response) => {
-    const { groupId, description, amount, paidBy } = req.body;
+    const { groupId, description, amount } = req.body;
 
     if (!groupId || !description || !amount) {
       throw new BadRequestError(
@@ -44,7 +44,7 @@ export const createExpense = asyncHandler(
       throw new ForbiddenError("You are not a member of this group");
     }
 
-    const payerId = paidBy || req.user._id;
+    const payerId = req.user._id;
 
     const splits = calculateEqualSplit(amount, group.members);
 
