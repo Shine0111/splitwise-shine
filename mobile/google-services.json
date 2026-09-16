@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "27965232341",
+    "project_id": "splitwise-lite-4614f",
+    "storage_bucket": "splitwise-lite-4614f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:27965232341:android:605f1632f65394daeefe5c",
+        "android_client_info": {
+          "package_name": "com.anachtori.splitwiselite"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA0SElizoq4Z6pHhEUNGJYzSAxS1PJ3fyw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

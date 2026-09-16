@@ -10,6 +10,8 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.anachtori.splitwiselite",
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -21,10 +23,7 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": [
-      "expo-font",
-      "expo-notifications"
-    ],
+    "plugins": ["expo-font", "expo-notifications"],
     "extra": {
       "eas": {
         "projectId": "e81578c5-cb12-4c39-b22a-47ad6aa63df7"
