@@ -15,7 +15,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/groups", groupRoutes);
 app.use("/api/expenses", expenseRoutes);
 app.use("/api/settlements", settlementRoutes);
-app.use("api/push-tokens", pushTokenRoutes);
+app.use("/api/push-tokens", pushTokenRoutes);
 
 app.get("/", (req: Request, res: Response) => {
   res.json({ message: "Splitwise-lite API is running" });
