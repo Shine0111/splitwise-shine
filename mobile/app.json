@@ -22,7 +22,14 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-font"
-    ]
+      "expo-font",
+      "expo-notifications"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "e81578c5-cb12-4c39-b22a-47ad6aa63df7"
+      }
+    },
+    "owner": "anachtori"
   }
 }
