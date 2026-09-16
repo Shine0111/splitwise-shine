@@ -3,6 +3,7 @@ import Settlement from "../models/Settlement";
 import Group from "../models/Group";
 import { AuthRequest } from "../middleware/authMiddleware";
 import { asyncHandler } from "../utils/asyncHandler";
+import { calculateNetBalances } from "../utils/calculateBalances";
 import {
   ForbiddenError,
   UnauthorizedError,
@@ -10,6 +11,7 @@ import {
   NotFoundError,
   ConflictError,
 } from "../utils/errors";
+import Expense from "../models/Expense";
 
 export const createSettlement = asyncHandler(
   async (req: AuthRequest, res: Response) => {
@@ -44,6 +46,39 @@ export const createSettlement = asyncHandler(
     );
     if (!isRecipientMember) {
       throw new BadRequestError("Recipient is not a member of this group");
+    }
+
+    if (req.user._id.toString() === to) {
+      throw new BadRequestError("You cannot settle with yourself");
+    }
+
+    const expenses = await Expense.find({ group: groupId });
+
+    const confirmedSettlements = await Settlement.find({
+      group: groupId,
+      status: "confirmed",
+    });
+
+    const balances = calculateNetBalances(expenses, confirmedSettlements);
+
+    const senderBalance = balances.get(req.user._id.toString()) ?? 0;
+    const recipientBalance = balances.get(to) ?? 0;
+
+    if (senderBalance >= 0 || recipientBalance <= 0) {
+      throw new BadRequestError(
+        "There is no outstanding debt between these users",
+      );
+    }
+
+    const maximumAllowedAmount = Math.min(
+      Math.abs(senderBalance),
+      recipientBalance,
+    );
+
+    if (amount > maximumAllowedAmount) {
+      throw new BadRequestError(
+        "Settlement amount exceeds the outstanding debt",
+      );
     }
 
     const settlement = await Settlement.create({
