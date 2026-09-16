@@ -17,6 +17,8 @@ import {
 } from "../api/settlements";
 import { getErrorMessage } from "../utils/errorMessage";
 import { colors, spacing } from "../utils/theme";
+import { getExpoPushToken } from "../notifications/registerForPushNotifications";
+import { registerPushTokenRequest } from "../api/pushTokens";
 
 export default function ProfileScreen() {
   const { user, logout } = useAuth();
@@ -25,6 +27,7 @@ export default function ProfileScreen() {
   const [respondingId, setRespondingId] = useState<string | null>(null);
   const [isRejecting, setIsRejecting] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
+  const [enablingNotifications, setEnablingNotifications] = useState(false);
 
   const fetchPending = async () => {
     try {
@@ -62,6 +65,33 @@ export default function ProfileScreen() {
     }
   };
 
+  const handleEnableNotifications = async () => {
+    setEnablingNotifications(true);
+
+    try {
+      const expoPushToken = await getExpoPushToken();
+
+      if (!expoPushToken) {
+        Alert.alert(
+          "Notifications not enabled",
+          "You can enable notifications later from your device settings.",
+        );
+        return;
+      }
+
+      await registerPushTokenRequest(expoPushToken);
+
+      Alert.alert(
+        "Notifications enabled",
+        "You will now receive updates about your groups and settlements.",
+      );
+    } catch (error) {
+      Alert.alert("Could not enable notifications", getErrorMessage(error));
+    } finally {
+      setEnablingNotifications(false);
+    }
+  };
+
   const handleLogout = () => {
     Alert.alert("Log out", "Are you sure you want to log out?", [
       { text: "Cancel", style: "cancel" },
@@ -96,6 +126,18 @@ export default function ProfileScreen() {
           <Text style={styles.email}>{user?.email}</Text>
         </View>
       </View>
+
+      <TouchableOpacity
+        style={styles.notificationButton}
+        onPress={() => void handleEnableNotifications()}
+        disabled={enablingNotifications}
+      >
+        <Text style={styles.notificationButtonText}>
+          {enablingNotifications
+            ? "Enabling notifications..."
+            : "Enable Push Notifications"}
+        </Text>
+      </TouchableOpacity>
 
       <View style={styles.confirmationsSection}>
         <Text style={styles.sectionTitle}>Pending Confirmations</Text>
@@ -270,5 +312,17 @@ const styles = StyleSheet.create({
   },
   confirmationsSection: {
     flex: 1,
+  },
+  notificationButton: {
+    backgroundColor: colors.primary,
+    borderRadius: 10,
+    paddingVertical: spacing.md,
+    alignItems: "center",
+    marginBottom: spacing.lg,
+  },
+  notificationButtonText: {
+    color: colors.surface,
+    fontSize: 15,
+    fontWeight: "700",
   },
 });

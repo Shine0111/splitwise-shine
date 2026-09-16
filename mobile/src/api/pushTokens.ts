@@ -1,7 +1,7 @@
 import { Platform } from "react-native";
 import apiClient from "./client";
 
-export const registerPushToken = async (
+export const registerPushTokenRequest = async (
   expoPushToken: string,
 ): Promise<void> => {
   const platform = Platform.OS;
