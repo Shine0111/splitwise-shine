@@ -187,10 +187,13 @@ describe("Authentication API", () => {
         password: await bcrypt.hash("password123", 10),
       });
 
-      const token = jwt.sign(
-        { id: user._id.toString() },
-        process.env.JWT_SECRET!,
-      );
+      const loginResponse = await request(app).post("/api/auth/login").send({
+        email: "alice@example.com",
+        password: "password123",
+      });
+      expect(loginResponse.status).toBe(200);
+
+      const token = loginResponse.body.token as string;
 
       const response = await request(app)
         .get("/api/auth/me")
@@ -234,10 +237,14 @@ describe("Authentication API", () => {
         password: await bcrypt.hash("password123", 10),
       });
 
-      const token = jwt.sign(
-        { id: user._id.toString() },
-        process.env.JWT_SECRET!,
-      );
+      const loginResponse = await request(app).post("/api/auth/login").send({
+        email: "alice@example.com",
+        password: "password123",
+      });
+
+      expect(loginResponse.status).toBe(200);
+
+      const token = loginResponse.body.token as string;
 
       await User.deleteOne({ _id: user._id });
 
@@ -301,6 +308,27 @@ describe("Authentication API", () => {
       } finally {
         process.env.JWT_SECRET = originalSecret;
       }
+    });
+    it("rejects tokens without a session identifier", async () => {
+      const user = await User.create({
+        name: "Alice",
+        email: "alice@example.com",
+        password: await bcrypt.hash("password123", 10),
+      });
+
+      const token = jwt.sign(
+        { id: user._id.toString() },
+        process.env.JWT_SECRET!,
+      );
+
+      const response = await request(app)
+        .get("/api/auth/me")
+        .set("Authorization", `Bearer ${token}`);
+
+      expect(response.status).toBe(401);
+      expect(response.body).toEqual({
+        message: "Not authorized, session required",
+      });
     });
   });
   describe("POST /api/auth/logout", () => {
