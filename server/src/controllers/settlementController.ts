@@ -12,6 +12,7 @@ import {
   ConflictError,
 } from "../utils/errors";
 import Expense from "../models/Expense";
+import { sendPushNotification } from "../services/pushNotificationService";
 
 export const createSettlement = asyncHandler(
   async (req: AuthRequest, res: Response) => {
@@ -91,6 +92,16 @@ export const createSettlement = asyncHandler(
     const populated = await Settlement.findById(settlement._id)
       .populate("from", "name email")
       .populate("to", "name email");
+
+    await sendPushNotification([settlement.to], {
+      title: "New settlement request",
+      body: `${req.user.name ?? "Someone"} requested a settlement of ${amount.toLocaleString()} MGA.`,
+      data: {
+        type: "settlement_created",
+        settlementId: settlement._id.toString(),
+        groupId: groupId.toString(),
+      },
+    });
 
     res.status(201).json(populated);
   },
