@@ -16,6 +16,7 @@ import {
   NotFoundError,
   ForbiddenError,
 } from "../utils/errors";
+import { sendPushNotification } from "../services/pushNotificationService";
 
 export const createExpense = asyncHandler(
   async (req: AuthRequest, res: Response) => {
@@ -59,6 +60,20 @@ export const createExpense = asyncHandler(
     const populatedExpense = await Expense.findById(expense._id)
       .populate("paidBy", "name email")
       .populate("splits.user", "name email");
+
+    const recipientIds = group.members.filter(
+      (memberId) => memberId.toString() !== payerId.toString(),
+    );
+
+    await sendPushNotification(recipientIds, {
+      title: `New expense in ${group.name}`,
+      body: `${req.user.name ?? "Someone"} added ${description} — ${amount.toLocaleString()} MGA`,
+      data: {
+        type: "expense_created",
+        expenseId: expense._id.toString(),
+        groupId: groupId.toString(),
+      },
+    });
 
     res.status(201).json(populatedExpense);
   },

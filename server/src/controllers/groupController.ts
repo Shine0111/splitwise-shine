@@ -9,6 +9,7 @@ import {
   UnauthorizedError,
   ForbiddenError,
 } from "../utils/errors";
+import { sendPushNotification } from "../services/pushNotificationService";
 
 export const createGroup = asyncHandler(
   async (req: AuthRequest, res: Response) => {
@@ -90,6 +91,15 @@ export const addMember = asyncHandler(
       "members",
       "name email",
     );
+
+    await sendPushNotification([userToAdd._id], {
+      title: `You were added to ${group.name}`,
+      body: `You were added to ${group.name} by ${req.user?.name ?? "the group creator"}.`,
+      data: {
+        type: "member_added",
+        groupId: group._id.toString(),
+      },
+    });
 
     res.status(200).json(updatedGroup);
   },

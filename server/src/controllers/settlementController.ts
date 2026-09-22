@@ -172,6 +172,21 @@ export const confirmSettlement = asyncHandler(
       .populate("from", "name email")
       .populate("to", "name email");
 
+    await sendPushNotification([settlement.from], {
+      title:
+        action === "confirm" ? "Settlement confirmed" : "Settlement rejected",
+      body:
+        action === "confirm"
+          ? `Your ${settlement.amount.toLocaleString()} MGA settlement with ${req.user.name ?? "the recipient"} was confirmed.`
+          : "Your settlement request was rejected.",
+      data: {
+        type:
+          action === "confirm" ? "settlement_confirmed" : "settlement_rejected",
+        settlementId: settlement._id.toString(),
+        groupId: settlement.group.toString(),
+      },
+    });
+
     res.status(200).json(populated);
   },
 );
