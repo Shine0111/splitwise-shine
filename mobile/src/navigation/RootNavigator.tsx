@@ -1,5 +1,6 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { NavigationContainer } from "@react-navigation/native";
+import { handleNavigationReady, navigationRef } from "./navigationRef";
 import { useAuth } from "../context/AuthContext";
 import { View, ActivityIndicator } from "react-native";
 import LoginScreen from "../screens/LoginScreen";
@@ -22,7 +23,7 @@ export default function RootNavigator() {
   }
 
   return (
-    <NavigationContainer>
+    <NavigationContainer ref={navigationRef} onReady={handleNavigationReady}>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {user ? (
           <>

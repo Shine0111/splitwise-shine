@@ -9,6 +9,7 @@ import {
   TextInput,
   Modal,
   Alert,
+  RefreshControl,
 } from "react-native";
 import { createGroupRequest, getMyGroupsRequest, Group } from "../api/groups";
 import { useFocusEffect } from "@react-navigation/native";
@@ -16,20 +17,33 @@ import { colors, spacing } from "../utils/theme";
 
 export default function GroupListScreen({ navigation }: any) {
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [groups, setGroups] = useState<Group[]>([]);
   const [newGroupName, setNewGroupName] = useState("");
   const [creating, setCreating] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
 
-  const fetchGroups = async () => {
+  const fetchGroups = async (isRefresh = false) => {
     try {
+      if (isRefresh) {
+        setRefreshing(true);
+      }
+
       const data = await getMyGroupsRequest();
       setGroups(data);
     } catch (error) {
       Alert.alert("Error", "Failed to load groups");
     } finally {
       setLoading(false);
+
+      if (isRefresh) {
+        setRefreshing(false);
+      }
     }
+  };
+
+  const handleRefresh = () => {
+    void fetchGroups(true);
   };
 
   useFocusEffect(
@@ -49,7 +63,7 @@ export default function GroupListScreen({ navigation }: any) {
       await createGroupRequest(newGroupName.trim());
       setNewGroupName("");
       setModalVisible(true);
-      fetchGroups();
+      await fetchGroups();
     } catch (error) {
       Alert.alert("Error", "Failed to create group");
     } finally {
@@ -86,6 +100,9 @@ export default function GroupListScreen({ navigation }: any) {
         data={groups}
         keyExtractor={(item) => item._id}
         contentContainerStyle={groups.length === 0 && styles.centered}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+        }
         ListEmptyComponent={
           <View style={styles.emptyState}>
             <Text style={styles.emptyTitle}>No groups yet</Text>
