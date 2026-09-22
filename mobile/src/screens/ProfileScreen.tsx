@@ -7,6 +7,8 @@ import {
   Alert,
   FlatList,
   ActivityIndicator,
+  RefreshControl,
+  ScrollView,
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { useAuth } from "../context/AuthContext";
@@ -24,20 +26,33 @@ export default function ProfileScreen() {
   const { user, logout } = useAuth();
   const [pending, setPending] = useState<Settlement[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [respondingId, setRespondingId] = useState<string | null>(null);
   const [isRejecting, setIsRejecting] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
   const [enablingNotifications, setEnablingNotifications] = useState(false);
 
-  const fetchPending = async () => {
+  const fetchPending = async (isRefresh = false) => {
     try {
+      if (isRefresh) {
+        setRefreshing(true);
+      }
+
       const data = await getPendingSettlementsRequest();
       setPending(data);
     } catch (error) {
       // silent fail is acceptable here — non-critical background data
     } finally {
       setLoading(false);
+
+      if (isRefresh) {
+        setRefreshing(false);
+      }
     }
+  };
+
+  const handleRefresh = () => {
+    void fetchPending(true);
   };
 
   useFocusEffect(
@@ -115,7 +130,13 @@ export default function ProfileScreen() {
       .toUpperCase() || "?";
 
   return (
-    <View style={styles.container}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={styles.contentContainer}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+      }
+    >
       <View style={styles.header}>
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>{initials}</Text>
@@ -188,7 +209,7 @@ export default function ProfileScreen() {
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
         <Text style={styles.logoutText}>Log Out</Text>
       </TouchableOpacity>
-    </View>
+    </ScrollView>
   );
 }
 
@@ -198,6 +219,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.lg,
     backgroundColor: colors.background,
+  },
+  contentContainer: {
+    flexGrow: 1,
+    paddingBottom: spacing.lg,
   },
   header: {
     flexDirection: "row",

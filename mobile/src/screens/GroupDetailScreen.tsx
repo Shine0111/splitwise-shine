@@ -9,6 +9,7 @@ import {
   Alert,
   Modal,
   TextInput,
+  RefreshControl,
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import {
@@ -34,6 +35,7 @@ export default function GroupDetailScreen({ route, navigation }: any) {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [balances, setBalances] = useState<BalanceTransaction[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<"expenses" | "balances">(
     "expenses",
   );
@@ -48,13 +50,18 @@ export default function GroupDetailScreen({ route, navigation }: any) {
   const [settling, setSettling] = useState(false);
   const [settlements, setSettlements] = useState<Settlement[]>([]);
 
-  const fetchData = async () => {
+  const fetchData = async (isRefresh = false) => {
     try {
+      if (isRefresh) {
+        setRefreshing(true);
+      }
+
       const [expensesData, balancesData, settlementsData] = await Promise.all([
         getGroupExpensesRequest(groupId),
         getGroupBalancesRequest(groupId),
         getGroupSettlementsRequest(groupId),
       ]);
+
       setExpenses(expensesData);
       setBalances(balancesData);
       setSettlements(settlementsData);
@@ -62,7 +69,15 @@ export default function GroupDetailScreen({ route, navigation }: any) {
       Alert.alert("Error", "Failed to load group data");
     } finally {
       setLoading(false);
+
+      if (isRefresh) {
+        setRefreshing(false);
+      }
     }
+  };
+
+  const handleRefresh = () => {
+    void fetchData(true);
   };
 
   const hasPendingSettlement = (transaction: BalanceTransaction) => {
@@ -218,6 +233,9 @@ export default function GroupDetailScreen({ route, navigation }: any) {
           data={expenses}
           keyExtractor={(item) => item._id}
           contentContainerStyle={expenses.length === 0 && styles.centered}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+          }
           ListEmptyComponent={
             <Text style={styles.emptyText}>No expenses yet.</Text>
           }
@@ -245,6 +263,9 @@ export default function GroupDetailScreen({ route, navigation }: any) {
           contentContainerStyle={balances.length === 0 && styles.centered}
           ListEmptyComponent={
             <Text style={styles.emptyText}>Everyone is settled up.</Text>
+          }
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
           }
           renderItem={({ item }) => {
             const isPending = hasPendingSettlement(item);
